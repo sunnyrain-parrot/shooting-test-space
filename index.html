@@ -317,7 +317,8 @@
 
             // 自動射撃
             this.fireTimer += dt;
-            const fireRate = Math.max(100, 200 - (this.powerLevel * 10)); // パワーアップで連射速度少しUP
+            // パワーアップで連射速度UP (最大で50ms間隔まで速くなる)
+            const fireRate = Math.max(50, 200 - (this.powerLevel * 15)); 
             
             if (this.fireTimer > fireRate) {
                 this.shoot();
@@ -326,15 +327,30 @@
         }
 
         shoot() {
-            if (this.powerLevel === 1) {
-                bullets.push(new Bullet(this.x, this.y - this.size, 0, -10, false));
-            } else if (this.powerLevel === 2) {
-                bullets.push(new Bullet(this.x - 10, this.y - this.size, 0, -10, false));
-                bullets.push(new Bullet(this.x + 10, this.y - this.size, 0, -10, false));
+            const maxBullets = Math.min(this.powerLevel, 7); // 弾の最大数は7発
+            const baseSpeed = 12; // 弾の基本速度も少しアップ
+
+            if (maxBullets === 1) {
+                bullets.push(new Bullet(this.x, this.y - this.size, 0, -baseSpeed, false));
+            } else if (maxBullets === 2) {
+                bullets.push(new Bullet(this.x - 10, this.y - this.size, 0, -baseSpeed, false));
+                bullets.push(new Bullet(this.x + 10, this.y - this.size, 0, -baseSpeed, false));
             } else {
-                bullets.push(new Bullet(this.x, this.y - this.size, 0, -10, false));
-                bullets.push(new Bullet(this.x - 15, this.y - this.size, -2, -9, false));
-                bullets.push(new Bullet(this.x + 15, this.y - this.size, 2, -9, false));
+                // 3発以上は扇状に発射する
+                const angleStep = 0.15; // 弾同士の広がる角度
+                const startAngle = -Math.PI / 2 - (angleStep * (maxBullets - 1)) / 2; // 真上を基準に左右に振り分ける
+
+                for (let i = 0; i < maxBullets; i++) {
+                    const angle = startAngle + angleStep * i;
+                    const vx = Math.cos(angle) * baseSpeed;
+                    const vy = Math.sin(angle) * baseSpeed;
+                    
+                    // 発射位置も角度に合わせて少しずらす
+                    const offsetX = Math.cos(angle) * 15;
+                    const offsetY = Math.sin(angle) * 15 - this.size;
+                    
+                    bullets.push(new Bullet(this.x + offsetX, this.y + offsetY, vx, vy, false));
+                }
             }
         }
 
@@ -354,8 +370,9 @@
 
         takeDamage(amount) {
             this.hp -= amount;
+            createParticles(this.x, this.y, COLORS.cloud, 3);
             updateHUD();
-            createParticles(this.x, this.y, COLORS.accent, 10);
+            
             if (this.hp <= 0) {
                 endGame();
             }
@@ -729,7 +746,7 @@
                     player.hp = Math.min(player.maxHp, player.hp + 30);
                     createParticles(player.x, player.y, COLORS.heal, 10);
                 } else if (item.type === 'power') {
-                    player.powerLevel = Math.min(3, player.powerLevel + 1);
+                    player.powerLevel = Math.min(7, player.powerLevel + 1); // パワーアップ上限を7に変更
                     score += 500;
                     createParticles(player.x, player.y, COLORS.power, 10);
                 }
