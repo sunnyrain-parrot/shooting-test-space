@@ -89,49 +89,34 @@
 
             <!-- HUD (ゲーム中) -->
             <div id="hud"
-                class="hidden w-full max-w-2xl mx-auto p-2 flex flex-col sm:flex-row justify-between items-stretch sm:items-start gap-1 sm:gap-4">
-                <div class="flex gap-2 justify-between sm:justify-start w-full sm:w-auto">
-                    <button id="pauseBtn"
-                        class="pointer-events-auto bg-[#F5F7FA] text-[#0B2F52] font-black px-2 sm:px-4 py-1 sm:py-2 neo-border neo-shadow-sm neo-btn text-[10px] sm:text-sm hover:bg-gray-200 shrink-0">HOME</button>
-                    <div class="flex gap-1 sm:gap-2 shrink-0">
+                class="hidden w-full max-w-2xl mx-auto p-2 flex flex-col justify-start items-stretch gap-1">
+                <div class="flex gap-2 justify-between items-center w-full">
+                    <div class="flex gap-1 sm:gap-2 items-center">
+                        <button id="pauseBtn"
+                            class="pointer-events-auto bg-[#F5F7FA] text-[#0B2F52] font-black px-2 sm:px-4 py-1 neo-border neo-shadow-sm neo-btn text-[10px] sm:text-sm hover:bg-gray-200 shrink-0">HOME</button>
                         <div
-                            class="bg-[#F5F7FA] neo-border neo-shadow-sm p-1 sm:p-2 flex flex-col w-10 sm:w-20 items-center">
+                            class="bg-[#F5F7FA] neo-border neo-shadow-sm p-1 flex flex-col w-10 sm:w-16 items-center">
                             <span
-                                class="text-[#0B2F52] text-[8px] sm:text-xs font-black uppercase tracking-wider mb-0 sm:mb-1">ST</span>
+                                class="text-[#0B2F52] text-[8px] sm:text-[10px] font-black uppercase tracking-wider leading-tight">ST</span>
                             <span id="stageDisplay"
-                                class="text-[#FF5A5F] text-sm sm:text-2xl font-black leading-none">1</span>
+                                class="text-[#FF5A5F] text-xs sm:text-lg font-black leading-none">1</span>
                         </div>
-                        <div class="bg-[#F5F7FA] neo-border neo-shadow-sm p-1 sm:p-2 flex flex-col w-20 sm:w-32">
+                        <div class="bg-[#F5F7FA] neo-border neo-shadow-sm p-1 flex flex-col w-20 sm:w-28">
                             <span
-                                class="text-[#0B2F52] text-[8px] sm:text-xs font-black uppercase tracking-wider mb-0 sm:mb-1">SCORE</span>
+                                class="text-[#0B2F52] text-[8px] sm:text-[10px] font-black uppercase tracking-wider leading-tight">SCORE</span>
                             <span id="scoreDisplay"
-                                class="text-[#0095FF] text-sm sm:text-2xl font-black leading-none truncate">0</span>
+                                class="text-[#0095FF] text-xs sm:text-lg font-black leading-none truncate">0</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="flex-1 w-full sm:max-w-xs flex flex-col gap-1 sm:gap-2">
-                    <!-- プレイヤーHP -->
-                    <div class="bg-[#F5F7FA] neo-border neo-shadow-sm p-1 flex items-center h-6 sm:h-10">
+                    <!-- プレイヤーHP (上部にコンパクトに配置) -->
+                    <div class="flex-1 max-w-[120px] sm:max-w-[200px] bg-[#F5F7FA] neo-border neo-shadow-sm p-0.5 flex items-center h-5 sm:h-7">
                         <div
-                            class="bg-[#0B2F52] text-[#F5F7FA] text-[8px] sm:text-xs font-black px-1 sm:px-2 py-0.5 mr-1 h-full flex items-center">
+                            class="bg-[#0B2F52] text-[#F5F7FA] text-[8px] sm:text-[10px] font-black px-1 mr-0.5 h-full flex items-center">
                             HP</div>
                         <div class="flex-1 h-full bg-gray-200 relative neo-border border-2 overflow-hidden">
                             <div id="hpBar"
                                 class="absolute top-0 left-0 h-full bg-[#0095FF] transition-all duration-200"
-                                style="width: 100%;"></div>
-                        </div>
-                    </div>
-
-                    <!-- ボスHP (非表示状態がデフォルト) -->
-                    <div id="bossHpContainer"
-                        class="hidden bg-[#F5F7FA] neo-border neo-shadow-sm p-1 flex items-center h-5 sm:h-8">
-                        <div
-                            class="bg-[#FF5A5F] text-[#F5F7FA] text-[8px] sm:text-xs font-black px-1 sm:px-2 mr-1 h-full flex items-center">
-                            BOSS</div>
-                        <div class="flex-1 h-full bg-gray-200 relative neo-border border-2 overflow-hidden">
-                            <div id="bossHpBar"
-                                class="absolute top-0 left-0 h-full bg-[#FF5A5F] transition-all duration-200"
                                 style="width: 100%;"></div>
                         </div>
                     </div>
@@ -240,8 +225,6 @@
         const hud = document.getElementById('hud');
         const scoreDisplay = document.getElementById('scoreDisplay');
         const hpBar = document.getElementById('hpBar');
-        const bossHpContainer = document.getElementById('bossHpContainer');
-        const bossHpBar = document.getElementById('bossHpBar');
         const stageBtns = document.querySelectorAll('.stage-btn');
         const retryBtn = document.getElementById('retryBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -750,7 +733,6 @@
                     this.targetY = 100 * scaleFactor;
                     this.color = COLORS.accent;
                     activeBoss = this;
-                    bossHpContainer.classList.remove('hidden');
 
                     if (type === 'small_boss') {
                         this.size = 35 * scaleFactor;
@@ -769,7 +751,6 @@
                         this.vy = 0;
                     }
                     this.maxHp = this.hp;
-                    updateBossHUD();
                 }
             }
 
@@ -845,16 +826,27 @@
                 }
                 ctx.restore();
 
+                // ボスの場合、HPゲージを下に表示
+                if (this.type.includes('boss')) {
+                    const barWidth = this.size * 2;
+                    const barHeight = 6 * scaleFactor;
+                    const offsetX = -barWidth / 2;
+                    const offsetY = this.size + 10 * scaleFactor;
+                    
+                    // 背景
+                    drawRectNeo(ctx, this.x + offsetX, this.y + offsetY, barWidth, barHeight, '#F5F7FA', COLORS.line, 2);
+                    // ゲージ
+                    const hpPercent = Math.max(0, this.hp / this.maxHp);
+                    ctx.fillStyle = COLORS.accent;
+                    ctx.fillRect(this.x + offsetX + 2 * scaleFactor, this.y + offsetY + 2 * scaleFactor, (barWidth - 4 * scaleFactor) * hpPercent, barHeight - 4 * scaleFactor);
+                }
+
                 ctx.shadowBlur = 0;
             }
 
             takeDamage(amount) {
                 this.hp -= amount;
                 createParticles(this.x, this.y, COLORS.accent, 3);
-
-                if (this.type.includes('boss')) {
-                    updateBossHUD();
-                }
 
                 if (this.hp <= 0) {
                     this.die();
@@ -875,7 +867,6 @@
                         playSound('explosion');
                         score += 5000 * difficultyLevel;
                         activeBoss = null;
-                        bossHpContainer.classList.add('hidden');
 
                         if (this.type === 'small_boss') { bossPhase = 2; mobsKilled = 0; }
                         else if (this.type === 'medium_boss') { bossPhase = 3; mobsKilled = 0; }
