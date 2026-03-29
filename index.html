@@ -727,7 +727,8 @@
                     this.size = 18 * scaleFactor;
                     this.hp = 2 + difficultyLevel;
                     this.vx = (Math.random() - 0.5) * 2 * scaleFactor;
-                    this.vy = (2 + Math.random() * difficultyLevel * 0.5) * scaleFactor;
+                    // 速度を抑える (以前は difficultyLevel に依存)
+                    this.vy = (2.2 + Math.random() * 0.8) * scaleFactor;
                     this.color = COLORS.enemy;
                 } else if (type.includes('boss')) {
                     this.targetY = 100 * scaleFactor;
@@ -737,17 +738,17 @@
                     if (type === 'small_boss') {
                         this.size = 35 * scaleFactor;
                         this.hp = 150 * difficultyLevel;
-                        this.vx = 2 * scaleFactor;
+                        this.vx = 1.8 * scaleFactor; // 速度を一定に
                         this.vy = 0;
                     } else if (type === 'medium_boss') {
                         this.size = 55 * scaleFactor;
                         this.hp = 300 * difficultyLevel;
-                        this.vx = 3 * scaleFactor;
+                        this.vx = 2.2 * scaleFactor; // 速度を一定に
                         this.vy = 0;
                     } else if (type === 'large_boss') {
                         this.size = 80 * scaleFactor;
                         this.hp = 600 * difficultyLevel;
-                        this.vx = 1.5 * scaleFactor;
+                        this.vx = 1.2 * scaleFactor; // 速度を一定に
                         this.vy = 0;
                     }
                     this.maxHp = this.hp;
@@ -764,9 +765,16 @@
                     // 画面端で跳ね返る
                     if (this.x < this.size || this.x > GAME_WIDTH - this.size) this.vx *= -1;
 
-                    // たまに撃つ
-                    if (Math.random() < 0.005 * difficultyLevel) {
-                        bullets.push(new Bullet(this.x, this.y + this.size, 0, 5 * scaleFactor, true));
+                    // たまに撃つ (頻度をアップし、高難易度では3方向弾)
+                    if (Math.random() < 0.008 * difficultyLevel) {
+                        if (difficultyLevel > 2 && Math.random() < 0.3) {
+                            // 3方向弾 (ステージ2以降)
+                            for(let i = -1; i <= 1; i++) {
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 5 * scaleFactor, true));
+                            }
+                        } else {
+                            bullets.push(new Bullet(this.x, this.y + this.size, 0, 5 * scaleFactor, true));
+                        }
                     }
 
                     if (this.y > GAME_HEIGHT + 50) this.markedForDeletion = true;
@@ -778,25 +786,33 @@
                         this.x += this.vx;
                         if (this.x < this.size || this.x > GAME_WIDTH - this.size) this.vx *= -1;
 
-                        // ボスの攻撃パターン
+                        // ボスの攻撃パターン (弾数を動的に増やす)
+                        const bulletCountBonus = Math.floor(difficultyLevel / 2);
+
                         if (this.type === 'small_boss' && this.timer > 1000) {
                             this.timer = 0;
-                            for (let i = -2; i <= 2; i++) {
-                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 6 * scaleFactor, true));
+                            const spread = 2 + bulletCountBonus;
+                            for (let i = -spread; i <= spread; i++) {
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 6 * scaleFactor, true));
                             }
                         } else if (this.type === 'medium_boss' && this.timer > 800) {
                             this.timer = 0;
-                            for (let i = -3; i <= 3; i++) {
-                                bullets.push(new Bullet(this.x, this.y + this.size, i * 2 * scaleFactor, 7 * scaleFactor, true));
+                            const spread = 3 + bulletCountBonus;
+                            for (let i = -spread; i <= spread; i++) {
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 7 * scaleFactor, true));
                             }
                         } else if (this.type === 'large_boss') {
                             if (this.timer > 600) {
                                 this.timer = 0;
                                 // 扇状+ランダム弾
-                                for (let i = -4; i <= 4; i++) {
-                                    bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 8 * scaleFactor, true));
+                                const spread = 4 + bulletCountBonus;
+                                for (let i = -spread; i <= spread; i++) {
+                                    bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 8 * scaleFactor, true));
                                 }
-                                bullets.push(new Bullet(this.x + (Math.random() - 0.5) * 100 * scaleFactor, this.y + this.size, (Math.random() - 0.5) * 5 * scaleFactor, 8 * scaleFactor, true));
+                                // ランダム弾の数も増やす
+                                for(let j = 0; j < bulletCountBonus; j++) {
+                                    bullets.push(new Bullet(this.x + (Math.random() - 0.5) * 100 * scaleFactor, this.y + this.size, (Math.random() - 0.5) * 5 * scaleFactor, 8 * scaleFactor, true));
+                                }
                             }
                         }
                     }
@@ -1098,7 +1114,7 @@
             if (mobsKilled >= 20 && bossPhase === 2) { nextBossType = 'medium_boss'; warningTimer = 3000; mobsKilled = 0; playSound('siren'); setTimeout(() => playSound('siren'), 1500); return; }
             if (mobsKilled >= 20 && bossPhase === 3) { nextBossType = 'large_boss'; warningTimer = 3000; mobsKilled = 0; playSound('siren'); setTimeout(() => playSound('siren'), 1500); return; }
 
-            if (Math.random() < 0.02 + (difficultyLevel * 0.005)) {
+            if (Math.random() < 0.02 + (difficultyLevel * 0.012)) {
                 const x = Math.random() * (GAME_WIDTH - 40 * scaleFactor) + 20 * scaleFactor;
                 const mobVars = ['mob', 'mob_2', 'mob_3'];
                 const selectedMob = mobVars[Math.floor(Math.random() * mobVars.length)];
