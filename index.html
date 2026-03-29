@@ -676,7 +676,7 @@
         }
 
         class Bullet {
-            constructor(x, y, vx, vy, isEnemy, isCharge = false, scale = 1) {
+            constructor(x, y, vx, vy, isEnemy, isCharge = false, scale = 1, color = null) {
                 this.x = x;
                 this.y = y;
                 this.vx = vx;
@@ -689,7 +689,12 @@
                     this.damage = Math.floor(10 + 40 * scale);
                 } else {
                     this.size = (isEnemy ? 8 : 6) * scaleFactor;
-                    this.color = isEnemy ? COLORS.accent : COLORS.primary;
+                    // 色の多様化: 引数で指定がない場合はデフォルト
+                    if (isEnemy) {
+                        this.color = color || COLORS.accent; // 赤が基本
+                    } else {
+                        this.color = COLORS.primary;
+                    }
                     this.damage = 1;
                 }
                 this.markedForDeletion = false;
@@ -710,7 +715,12 @@
                     drawCircleNeo(ctx, this.x, this.y, this.size / 2, this.color);
                     ctx.shadowBlur = 0;
                 } else {
-                    drawRectNeo(ctx, this.x - this.size / 2, this.y - this.size / 2, this.size, this.size * 2, this.color, COLORS.line, 2);
+                    // 弾の形状にバリエーションを持たせる
+                    if (this.isEnemy && this.color !== COLORS.accent) {
+                        drawCircleNeo(ctx, this.x, this.y, this.size / 2, this.color, COLORS.line, 2);
+                    } else {
+                        drawRectNeo(ctx, this.x - this.size / 2, this.y - this.size / 2, this.size, this.size * 2, this.color, COLORS.line, 2);
+                    }
                 }
             }
         }
@@ -727,8 +737,8 @@
                     this.size = 18 * scaleFactor;
                     this.hp = 2 + difficultyLevel;
                     this.vx = (Math.random() - 0.5) * 2 * scaleFactor;
-                    // 速度を抑える (以前は difficultyLevel に依存)
-                    this.vy = (2.2 + Math.random() * 0.8) * scaleFactor;
+                    // 速度を完全に固定（面白さを損なわない一定の速さ）
+                    this.vy = 2.5 * scaleFactor;
                     this.color = COLORS.enemy;
                 } else if (type.includes('boss')) {
                     this.targetY = 100 * scaleFactor;
@@ -738,17 +748,17 @@
                     if (type === 'small_boss') {
                         this.size = 35 * scaleFactor;
                         this.hp = 150 * difficultyLevel;
-                        this.vx = 1.8 * scaleFactor; // 速度を一定に
+                        this.vx = 1.8 * scaleFactor; 
                         this.vy = 0;
                     } else if (type === 'medium_boss') {
                         this.size = 55 * scaleFactor;
                         this.hp = 300 * difficultyLevel;
-                        this.vx = 2.2 * scaleFactor; // 速度を一定に
+                        this.vx = 2.0 * scaleFactor; 
                         this.vy = 0;
                     } else if (type === 'large_boss') {
                         this.size = 80 * scaleFactor;
                         this.hp = 600 * difficultyLevel;
-                        this.vx = 1.2 * scaleFactor; // 速度を一定に
+                        this.vx = 1.0 * scaleFactor; 
                         this.vy = 0;
                     }
                     this.maxHp = this.hp;
@@ -762,18 +772,18 @@
                     this.x += this.vx;
                     this.y += this.vy;
 
-                    // 画面端で跳ね返る
                     if (this.x < this.size || this.x > GAME_WIDTH - this.size) this.vx *= -1;
 
-                    // たまに撃つ (頻度をアップし、高難易度では3方向弾)
-                    if (Math.random() < 0.008 * difficultyLevel) {
-                        if (difficultyLevel > 2 && Math.random() < 0.3) {
-                            // 3方向弾 (ステージ2以降)
+                    // 射撃頻度を抑え、色を混ぜる
+                    if (Math.random() < 0.006 * Math.min(difficultyLevel, 4)) {
+                        const bulletColor = Math.random() < 0.2 ? '#FF00FF' : COLORS.accent; // たまに紫
+                        if (difficultyLevel > 2 && Math.random() < 0.2) {
+                            // 3方向弾の頻度を下げ、密度を抑える
                             for(let i = -1; i <= 1; i++) {
-                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 5 * scaleFactor, true));
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 4.5 * scaleFactor, true, false, 1, bulletColor));
                             }
                         } else {
-                            bullets.push(new Bullet(this.x, this.y + this.size, 0, 5 * scaleFactor, true));
+                            bullets.push(new Bullet(this.x, this.y + this.size, 0, 5 * scaleFactor, true, false, 1, bulletColor));
                         }
                     }
 
@@ -786,32 +796,34 @@
                         this.x += this.vx;
                         if (this.x < this.size || this.x > GAME_WIDTH - this.size) this.vx *= -1;
 
-                        // ボスの攻撃パターン (弾数を動的に増やす)
-                        const bulletCountBonus = Math.floor(difficultyLevel / 2);
+                        // ボスの攻撃パターン (上限を設けて画面を埋め尽くさないようにする)
+                        const bulletCountBonus = Math.min(2, Math.floor(difficultyLevel / 3));
 
-                        if (this.type === 'small_boss' && this.timer > 1000) {
+                        if (this.type === 'small_boss' && this.timer > 1200) {
                             this.timer = 0;
                             const spread = 2 + bulletCountBonus;
+                            const color = Math.random() < 0.3 ? '#FFD700' : COLORS.accent; // 黄色を混ぜる
                             for (let i = -spread; i <= spread; i++) {
-                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 6 * scaleFactor, true));
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.1 * scaleFactor, 5.5 * scaleFactor, true, false, 1, color));
                             }
-                        } else if (this.type === 'medium_boss' && this.timer > 800) {
+                        } else if (this.type === 'medium_boss' && this.timer > 1000) {
                             this.timer = 0;
-                            const spread = 3 + bulletCountBonus;
+                            const spread = 2 + bulletCountBonus;
+                            const color = Math.random() < 0.3 ? '#FF00FF' : COLORS.accent; // 紫を混ぜる
                             for (let i = -spread; i <= spread; i++) {
-                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.5 * scaleFactor, 7 * scaleFactor, true));
+                                bullets.push(new Bullet(this.x, this.y + this.size, i * 1.4 * scaleFactor, 6.5 * scaleFactor, true, false, 1, color));
                             }
                         } else if (this.type === 'large_boss') {
-                            if (this.timer > 600) {
+                            if (this.timer > 800) {
                                 this.timer = 0;
-                                // 扇状+ランダム弾
-                                const spread = 4 + bulletCountBonus;
+                                const spread = 3 + bulletCountBonus;
+                                const color = Math.random() < 0.4 ? (Math.random() > 0.5 ? '#FFD700' : '#FF00FF') : COLORS.accent;
                                 for (let i = -spread; i <= spread; i++) {
-                                    bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 8 * scaleFactor, true));
+                                    bullets.push(new Bullet(this.x, this.y + this.size, i * 1.2 * scaleFactor, 7 * scaleFactor, true, false, 1, color));
                                 }
-                                // ランダム弾の数も増やす
-                                for(let j = 0; j < bulletCountBonus; j++) {
-                                    bullets.push(new Bullet(this.x + (Math.random() - 0.5) * 100 * scaleFactor, this.y + this.size, (Math.random() - 0.5) * 5 * scaleFactor, 8 * scaleFactor, true));
+                                // ランダム弾は控えめに
+                                if (Math.random() < 0.5) {
+                                    bullets.push(new Bullet(this.x + (Math.random() - 0.5) * 100 * scaleFactor, this.y + this.size, (Math.random() - 0.5) * 4 * scaleFactor, 7 * scaleFactor, true, false, 1, '#00FFFF'));
                                 }
                             }
                         }
