@@ -1026,13 +1026,6 @@
             }
         }
 
-        function updateBossHUD() {
-            if (activeBoss) {
-                const hpPercent = Math.max(0, (activeBoss.hp / activeBoss.maxHp) * 100);
-                bossHpBar.style.width = `${hpPercent}%`;
-            }
-        }
-
         /** --- ゲームループと状態管理 --- */
         function initGame(stage, keepPlayer = false) {
             currentStage = stage;
@@ -1052,7 +1045,6 @@
             particles = [];
             items = [];
             activeBoss = null;
-            score = 0;
             mobsKilled = 0;
 
             difficultyLevel = 1 + (stage - 1) * 2;
@@ -1068,7 +1060,6 @@
             isGameClear = false;
             gameClearTimer = 0;
 
-            bossHpContainer.classList.add('hidden');
             updateHUD();
         }
 
