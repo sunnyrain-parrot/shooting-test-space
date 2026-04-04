@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 
 <head>
@@ -618,8 +618,12 @@
 
                 // 自機グラフィック
                 if (images['player_ship'] && images['player_ship'].complete) {
-                    // 画像を描画
-                    ctx.drawImage(images['player_ship'], this.x - this.size * 1.5, this.y - this.size * 1.5, this.size * 3, this.size * 3);
+                    // アスペクト比を維持して描画
+                    const img = images['player_ship'];
+                    const aspect = img.naturalWidth / img.naturalHeight;
+                    const drawH = this.size * 3;
+                    const drawW = drawH * aspect;
+                    ctx.drawImage(img, this.x - drawW / 2, this.y - drawH / 2, drawW, drawH);
                 } else {
                     ctx.shadowBlur = 10;
                     ctx.shadowColor = COLORS.primary;
@@ -837,13 +841,17 @@
 
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.rotate(Math.PI);
 
                 let imgKey = this.type.startsWith('mob') ? (this.type === 'mob' ? 'mob_enemy' : 'mob_enemy_' + this.type.split('_')[1]) : this.type;
                 let drawSize = this.type.startsWith('mob') ? this.size * 3 : this.size * 2;
 
                 if (images[imgKey] && images[imgKey].complete) {
-                    ctx.drawImage(images[imgKey], -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+                    // アスペクト比を維持して描画
+                    const img = images[imgKey];
+                    const aspect = img.naturalWidth / img.naturalHeight;
+                    const drawH = drawSize;
+                    const drawW = drawH * aspect;
+                    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
                     // フォールバック
                     if (this.type.startsWith('mob')) {
