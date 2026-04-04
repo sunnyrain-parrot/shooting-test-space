@@ -841,6 +841,7 @@
 
                 ctx.save();
                 ctx.translate(this.x, this.y);
+                ctx.rotate(Math.PI);
 
                 let imgKey = this.type.startsWith('mob') ? (this.type === 'mob' ? 'mob_enemy' : 'mob_enemy_' + this.type.split('_')[1]) : this.type;
                 let drawSize = this.type.startsWith('mob') ? this.size * 3 : this.size * 2;
